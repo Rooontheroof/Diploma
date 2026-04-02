@@ -1,42 +1,15 @@
 import pytest
 from unittest.mock import MagicMock
+
 from praktikum.burger import Burger
 from praktikum.bun import Bun
 from praktikum.ingredient import Ingredient
-from praktikum.ingredient_types import INGREDIENT_TYPE_SAUCE, INGREDIENT_TYPE_FILLING
+from praktikum.ingredient_types import INGREDIENT_TYPE_SAUCE
 
-
-@pytest.fixture
-def mock_bun():
-    bun = MagicMock(spec=Bun)
-    bun.get_name.return_value = 'black bun'
-    bun.get_price.return_value = 100
-    return bun
-
-
-@pytest.fixture
-def mock_sauce():
-    ingredient = MagicMock(spec=Ingredient)
-    ingredient.get_name.return_value = 'hot sauce'
-    ingredient.get_price.return_value = 50
-    ingredient.get_type.return_value = INGREDIENT_TYPE_SAUCE
-    return ingredient
-
-
-@pytest.fixture
-def mock_filling():
-    ingredient = MagicMock(spec=Ingredient)
-    ingredient.get_name.return_value = 'cutlet'
-    ingredient.get_price.return_value = 100
-    ingredient.get_type.return_value = INGREDIENT_TYPE_FILLING
-    return ingredient
-
-
-@pytest.fixture
-def burger_with_bun(mock_bun):
-    burger = Burger()
-    burger.set_buns(mock_bun)
-    return burger
+from test_data import (
+    BUN_PRICE, BUN_NAME,
+    SAUCE_NAME
+)
 
 
 class TestBurgerSetBuns:
@@ -86,12 +59,14 @@ class TestBurgerMoveIngredient:
 class TestBurgerGetPrice:
 
     def test_get_price_bun_only(self, burger_with_bun):
-        assert burger_with_bun.get_price() == 200
+        expected = BUN_PRICE * 2
+        assert burger_with_bun.get_price() == expected
 
     def test_get_price_with_ingredients(self, burger_with_bun, mock_sauce, mock_filling):
         burger_with_bun.add_ingredient(mock_sauce)
         burger_with_bun.add_ingredient(mock_filling)
-        assert burger_with_bun.get_price() == 350
+        expected = BUN_PRICE * 2 + mock_sauce.get_price() + mock_filling.get_price()
+        assert burger_with_bun.get_price() == expected
 
     @pytest.mark.parametrize('bun_price, ingredient_prices, expected', [
         (100, [], 200),
@@ -119,18 +94,19 @@ class TestBurgerGetPrice:
 class TestBurgerGetReceipt:
 
     def test_get_receipt_contains_bun_name(self, burger_with_bun):
-        assert 'black bun' in burger_with_bun.get_receipt()
+        assert BUN_NAME in burger_with_bun.get_receipt()
 
     def test_get_receipt_contains_price(self, burger_with_bun):
-        assert 'Price: 200' in burger_with_bun.get_receipt()
+        expected_price = BUN_PRICE * 2
+        assert f'Price: {expected_price}' in burger_with_bun.get_receipt()
 
     def test_get_receipt_contains_ingredient_name(self, burger_with_bun, mock_sauce):
         burger_with_bun.add_ingredient(mock_sauce)
-        assert 'hot sauce' in burger_with_bun.get_receipt()
+        assert SAUCE_NAME in burger_with_bun.get_receipt()
 
     def test_get_receipt_contains_ingredient_type(self, burger_with_bun, mock_sauce):
         burger_with_bun.add_ingredient(mock_sauce)
-        assert 'sauce' in burger_with_bun.get_receipt()
+        assert mock_sauce.get_type().lower() in burger_with_bun.get_receipt()
 
     def test_get_receipt_format(self, burger_with_bun, mock_sauce):
         burger_with_bun.add_ingredient(mock_sauce)
@@ -138,5 +114,5 @@ class TestBurgerGetReceipt:
 
         lines = receipt.split('\n')
 
-        assert lines[0] == '(==== black bun ====)'
-        assert '(==== black bun ====)' in lines
+        assert lines[0] == f'(==== {BUN_NAME} ====)'
+        assert f'(==== {BUN_NAME} ====)' in lines

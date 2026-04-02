@@ -1,8 +1,8 @@
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 from helpers import BASE_URL, LOGIN_URL, REGISTER_URL, generate_email, generate_password
-from locators.locators import MainPageLocators, LoginPageLocators, RegisterPageLocators, ProfilePageLocators
 
 
 def register_and_login(driver):
@@ -13,18 +13,18 @@ def register_and_login(driver):
 
     driver.get(REGISTER_URL)
 
-    wait.until(EC.visibility_of_element_located(RegisterPageLocators.NAME_INPUT)).send_keys("Test User")
-    driver.find_element(*RegisterPageLocators.EMAIL_INPUT).send_keys(email)
-    driver.find_element(*RegisterPageLocators.PASSWORD_INPUT).send_keys(password)
-    driver.find_element(*RegisterPageLocators.REGISTER_BUTTON).click()
+    wait.until(EC.visibility_of_element_located((By.XPATH, "//fieldset[1]//input"))).send_keys("Test User")
+    driver.find_element(By.XPATH, "//fieldset[2]//input").send_keys(email)
+    driver.find_element(By.XPATH, "//fieldset[3]//input").send_keys(password)
+    driver.find_element(By.XPATH, "//button[text()='Зарегистрироваться']").click()
 
     wait.until(EC.url_to_be(LOGIN_URL))
 
-    wait.until(EC.visibility_of_element_located(LoginPageLocators.EMAIL_INPUT)).send_keys(email)
-    driver.find_element(*LoginPageLocators.PASSWORD_INPUT).send_keys(password)
-    driver.find_element(*LoginPageLocators.LOGIN_BUTTON).click()
+    wait.until(EC.visibility_of_element_located((By.XPATH, "//fieldset[1]//input"))).send_keys(email)
+    driver.find_element(By.XPATH, "//input[@name='Пароль']").send_keys(password)
+    driver.find_element(By.XPATH, "//button[text()='Войти']").click()
 
-    wait.until(EC.visibility_of_element_located(MainPageLocators.PERSONAL_ACCOUNT_LINK))
+    wait.until(EC.visibility_of_element_located((By.XPATH, "//a[@href='/account']")))
 
 
 class TestPersonalAccount:
@@ -36,7 +36,7 @@ class TestPersonalAccount:
 
         current_url = driver.current_url
 
-        wait.until(EC.element_to_be_clickable(MainPageLocators.PERSONAL_ACCOUNT_LINK)).click()
+        wait.until(EC.element_to_be_clickable((By.XPATH, "//a[@href='/account']"))).click()
         wait.until(EC.url_changes(current_url))
 
         assert "/account" in driver.current_url
@@ -46,12 +46,18 @@ class TestPersonalAccount:
 
         register_and_login(driver)
 
-        wait.until(EC.element_to_be_clickable(MainPageLocators.PERSONAL_ACCOUNT_LINK)).click()
-        wait.until(EC.visibility_of_element_located(ProfilePageLocators.LOGOUT_BUTTON))
+        wait.until(EC.element_to_be_clickable((By.XPATH, "//a[@href='/account']"))).click()
+        wait.until(EC.visibility_of_element_located((By.XPATH, "//button[text()='Выход']")))
 
         current_url = driver.current_url
 
-        wait.until(EC.element_to_be_clickable(MainPageLocators.CONSTRUCTOR_LINK)).click()
+        # иногда перекрывается → скролл
+        constructor = wait.until(
+            EC.presence_of_element_located((By.XPATH, "//a[@href='/']"))
+        )
+        driver.execute_script("arguments[0].scrollIntoView();", constructor)
+
+        wait.until(EC.element_to_be_clickable((By.XPATH, "//a[@href='/']"))).click()
         wait.until(EC.url_changes(current_url))
 
         assert driver.current_url == BASE_URL + "/"
@@ -61,12 +67,20 @@ class TestPersonalAccount:
 
         register_and_login(driver)
 
-        wait.until(EC.element_to_be_clickable(MainPageLocators.PERSONAL_ACCOUNT_LINK)).click()
-        wait.until(EC.visibility_of_element_located(ProfilePageLocators.LOGOUT_BUTTON))
+        wait.until(EC.element_to_be_clickable((By.XPATH, "//a[@href='/account']"))).click()
+        wait.until(EC.visibility_of_element_located((By.XPATH, "//button[text()='Выход']")))
 
         current_url = driver.current_url
 
-        wait.until(EC.element_to_be_clickable(MainPageLocators.LOGO)).click()
+        logo = wait.until(
+            EC.presence_of_element_located((By.XPATH, "//div[contains(@class,'AppHeader_header__logo')]"))
+        )
+        driver.execute_script("arguments[0].scrollIntoView();", logo)
+
+        wait.until(
+            EC.element_to_be_clickable((By.XPATH, "//div[contains(@class,'AppHeader_header__logo')]"))
+        ).click()
+
         wait.until(EC.url_changes(current_url))
 
         assert driver.current_url == BASE_URL + "/"
@@ -76,12 +90,12 @@ class TestPersonalAccount:
 
         register_and_login(driver)
 
-        wait.until(EC.element_to_be_clickable(MainPageLocators.PERSONAL_ACCOUNT_LINK)).click()
-        wait.until(EC.visibility_of_element_located(ProfilePageLocators.LOGOUT_BUTTON))
+        wait.until(EC.element_to_be_clickable((By.XPATH, "//a[@href='/account']"))).click()
+        wait.until(EC.visibility_of_element_located((By.XPATH, "//button[text()='Выход']")))
 
         current_url = driver.current_url
 
-        wait.until(EC.element_to_be_clickable(ProfilePageLocators.LOGOUT_BUTTON)).click()
+        wait.until(EC.element_to_be_clickable((By.XPATH, "//button[text()='Выход']"))).click()
         wait.until(EC.url_changes(current_url))
 
         assert "/login" in driver.current_url
